@@ -1,5 +1,5 @@
 name: 'Amazon ECS "Deploy Task Definition" Action for GitHub Actions'
-description: 'Registers an Amazon ECS task definition, and deploys it to an ECS service'
+description: 'Registers an Amazon ECS task definition, and optionally deploys it to an ECS service. The action will only register the task definition if no service or rule-name are given.'
 branding:
   icon: 'cloud'
   color: 'orange'
@@ -8,7 +8,13 @@ inputs:
     description: 'The path to the ECS task definition file to register'
     required: true
   service:
-    description: 'The name of the ECS service to deploy to. The action will only register the task definition if no service is given.'
+    description: 'The name of the ECS service to deploy to.'
+    required: false
+  rule-name:
+    description: 'The name of a Cloudwatch Events Rule to update. Also requires target-id.'
+    required: false
+  target-id:
+    description: 'The ID of the Cloudwatch Events Rule Target to update. Required if rule-name is set.'
     required: false
   cluster:
     description: "The name of the ECS service's cluster.  Will default to the 'default' cluster"

@@ -1,6 +1,6 @@
 ## Amazon ECS "Deploy Task Definition" Action for GitHub Actions
 
-Registers an Amazon ECS task definition and deploys it to an ECS service.
+Registers an Amazon ECS task definition and deploys it to an ECS service or scheduled task.
 
 **Table of Contents**
 
@@ -20,6 +20,7 @@ Registers an Amazon ECS task definition and deploys it to an ECS service.
 
 ## Usage
 
+Service:
 ```yaml
     - name: Deploy to Amazon ECS
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
@@ -28,6 +29,16 @@ Registers an Amazon ECS task definition and deploys it to an ECS service.
         service: my-service
         cluster: my-cluster
         wait-for-service-stability: true
+```
+
+Scheduled Task:
+```yaml
+    - name: Deploy to Amazon ECS
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        rule-name: my-cloudwatch-events-rule
+        target-id: my-event-rule-target
 ```
 
 See [action.yml](action.yml) for the full documentation for this action's inputs and outputs.

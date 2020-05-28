@@ -44,6 +44,25 @@ async function updateEcsService(ecs, clusterName, service, taskDefArn, waitForSe
   }
 }
 
+// Update the task definition for a Cloudwatch Events Rule Target
+async function updateCloudwatchEventsRuleTarget(cwe, ruleName, targetId, taskDefArn) {
+  const data = await cwe.listTargetsByRule({Rule: ruleName}).promise();
+  if (!data || !data.Targets || !data.Targets.length) {
+    return null;
+  }
+
+  const updatedTargets = data.Targets.map(target => {
+    if (target.Id === targetId) {
+      core.debug(`Updating task definition for target ${targetId} of rule ${ruleName}`);
+      target.EcsParameters.TaskDefinitionArn = taskDefArn;
+    }
+
+    return target;
+  });
+
+  return cwe.putTargets({Rule: ruleName, Targets: updatedTargets}).promise();
+}
+
 // Find value in a CodeDeploy AppSpec file with a case-insensitive key
 function findAppSpecValue(obj, keyName) {
   return obj[findAppSpecKey(obj, keyName)];
@@ -204,17 +223,25 @@ async function createCodeDeployDeployment(codedeploy, clusterName, service, task
 }
 
 async function run() {
+  const awsCommonOptions = {
+    customUserAgent: 'amazon-ecs-deploy-task-definition-for-github-actions'
+  };
   try {
-    const ecs = new aws.ECS({
-      customUserAgent: 'amazon-ecs-deploy-task-definition-for-github-actions'
-    });
-    const codedeploy = new aws.CodeDeploy({
-      customUserAgent: 'amazon-ecs-deploy-task-definition-for-github-actions'
-    });
+    const ecs = new aws.ECS(awsCommonOptions);
+    const codedeploy = new aws.CodeDeploy(awsCommonOptions);
+    const cwe = new aws.CloudWatchEvents(awsCommonOptions);
 
     // Get inputs
     const taskDefinitionFile = core.getInput('task-definition', { required: true });
     const service = core.getInput('service', { required: false });
+    const ruleName = core.getInput('rule-name', { required: false });
+    const targetId = core.getInput('target-id', { required: false });
+    if (service && ruleName) {
+      throw new Error('Only one of service or rule-name may be specified, not both.');
+    }
+    if (ruleName && !targetId) {
+      throw new Error('When specifying a rule-name, target-id is also required.');
+    }
     const cluster = core.getInput('cluster', { required: false });
     const waitForService = core.getInput('wait-for-service-stability', { required: false });
     let waitForMinutes = parseInt(core.getInput('wait-for-minutes', { required: false })) || 30;
@@ -270,8 +297,21 @@ async function run() {
       } else {
         throw new Error(`Unsupported deployment controller: ${serviceResponse.deploymentController.type}`);
       }
+    } else if (ruleName) {
+      if (cluster) {
+        core.debug('Cluster is not required or used when specifying rule-name and target-id');
+      }
+      const data = await cwe.listRules().promise();
+      const rules = (data && data.Rules) || [];
+      await Promise.all(
+        rules.map(rule => {
+          if (rule.Name === ruleName) {
+            return updateCloudwatchEventsRuleTarget(cwe, ruleName, targetId, taskDefArn);
+          }
+        })
+      );
     } else {
-      core.debug('Service was not specified, no service updated');
+      core.debug('Service or scheduled task was not specified, only task definition was updated');
     }
   }
   catch (error) {
