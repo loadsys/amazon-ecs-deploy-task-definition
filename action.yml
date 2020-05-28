@@ -5,7 +5,7 @@ branding:
   color: 'orange'
 inputs:
   task-definition:
-    description: 'The path to the ECS task definition file to register'
+    description: 'The path to the ECS task definition file to register.'
     required: true
   service:
     description: 'The name of the ECS service to deploy to.'
@@ -17,7 +17,7 @@ inputs:
     description: 'The ID of the Cloudwatch Events Rule Target to update. Required if rule-name is set.'
     required: false
   cluster:
-    description: "The name of the ECS service's cluster.  Will default to the 'default' cluster"
+    description: "The name of the ECS service's cluster.  Will default to the 'default' cluster."
     required: false
   wait-for-service-stability:
     description: 'Whether to wait for the ECS service to reach stable state after deploying the new task definition. Valid value is "true". Will default to not waiting.'
@@ -36,9 +36,9 @@ inputs:
     required: false
 outputs:
   task-definition-arn:
-    description: 'The ARN of the registered ECS task definition'
+    description: 'The ARN of the registered ECS task definition.'
   codedeploy-deployment-id:
-    description: 'The deployment ID of the CodeDeploy deployment (if the ECS service uses the CODE_DEPLOY deployment controller'
+    description: 'The deployment ID of the CodeDeploy deployment (if the ECS service uses the CODE_DEPLOY deployment controller).'
 runs:
   using: 'node12'
   main: 'dist/index.js'
